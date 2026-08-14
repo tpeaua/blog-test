@@ -11,5 +11,6 @@ an agentic team running on Meridian.
 - **Add a post**: `scripts/new-post.sh "Topic" [slug] [tone]`.
 
 Meridian verbs: `meridian validate <spec>`, `meridian plan <spec>`, `meridian run <spec>
---allow ... --input seed.json`, `meridian replay run.jsonl`. `llm` effects need the
-`claude` CLI on PATH; deterministic legs (`fs.write`, `bash.run`, deploy) need nothing.
+--allow ... --provider pi --input seed.json`, `meridian replay run.jsonl`. `llm` effects
+use the `pi` provider (`--provider pi`); deterministic legs (`fs.write`, `bash.run`,
+deploy) need nothing.

@@ -55,12 +55,19 @@ meridian run .meridian/deploy/deploy.json --allow bash.run \
       --input .meridian/deploy/seed.json --out .meridian/deploy/run.jsonl
 meridian replay .meridian/deploy/run.jsonl
 
-# add a post through the agentic team (needs the claude CLI for the llm effects)
+# add a post through the agentic team (uses the `pi` provider by default)
 scripts/new-post.sh "Your topic" my-slug conversational
+
+# ...or run the team directly
+meridian run .meridian/team/content-team.json --provider pi \
+      --allow llm,fs.write,bash.run --input .meridian/team/seed-example.json \
+      --out .meridian/team/run.jsonl
+meridian replay .meridian/team/run.jsonl
 ```
 
 ## Live-leg note
 
-The `llm` effects (writer/editor/reviewer) need a live provider — Meridian defaults
-to the **`claude` CLI** on `PATH`. `fs.write`, `bash.run`, the deploy workflow, and
-every replay are `$0` and need nothing external.
+The `llm` effects (writer/editor/reviewer) need a live provider. Meridian defaults to
+the **`claude` CLI**; this project uses the **`pi`** CLI via `--provider pi` (added in a
+small local patch to `engine/cmd/meridian/run.go`). `fs.write`, `bash.run`, the deploy
+workflow, and every replay are `$0` and need nothing external.
