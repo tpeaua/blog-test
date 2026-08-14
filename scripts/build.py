@@ -14,8 +14,8 @@ SITE = ROOT / "site"
 DIST = ROOT / "dist"
 POSTS = SITE / "posts"
 
-SITE_TITLE = "Meridian Notes"
-TAGLINE = "A tiny blog, built by an agentic team."
+SITE_TITLE = "My Blog"
+TAGLINE = "A few posts, nothing fancy."
 
 
 def parse_front_matter(text: str):
