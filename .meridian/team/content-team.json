@@ -1,0 +1,122 @@
+{
+  "apiVersion": "meridian.dev/v1alpha1",
+  "kind": "Workflow",
+  "name": "blog-content-team",
+  "description": "The blog's agentic content team as data: writer -> editor -> reviewer -> gate -> publisher -> build. Seed a team.Brief (topic/slug/date) and the team drafts, edits, reviews, and publishes a post. Every effect is journaled, so the whole run replays byte-for-byte at $0.",
+  "requires": ["llm", "fs.write", "bash.run"],
+  "components": {
+    "team.Brief": {
+      "topic": "string",
+      "tone": "string",
+      "slug": "string",
+      "date": "string"
+    },
+    "team.Draft": {
+      "title": "string",
+      "body": "string"
+    },
+    "team.Edited": {
+      "title": "string",
+      "body": "string"
+    },
+    "team.Review": {
+      "verdict": "string",
+      "notes": "string"
+    },
+    "team.Approved": {
+      "title": "string",
+      "body": "string"
+    },
+    "team.Revise": {
+      "notes": "string"
+    },
+    "team.Published": {
+      "path": "string"
+    },
+    "team.Built": {
+      "code": "number",
+      "stdout": "string",
+      "stderr": "string"
+    }
+  },
+  "steps": [
+    {
+      "kind": "emit-effect",
+      "name": "writer",
+      "description": "Role: WRITER. Drafts a post from the brief.",
+      "when": ["team.Brief"],
+      "effect": "llm",
+      "prompt": "You are the WRITER on a blog team. Write a focused blog post on this topic: {{team.Brief.topic}}. Tone: {{team.Brief.tone}}. Return ONLY a JSON object {\"title\": \"...\", \"body\": \"...\"} where body is Markdown (headings, short paragraphs, one code block if it helps). No prose outside the JSON.",
+      "resultCid": "team.Draft"
+    },
+    {
+      "kind": "emit-effect",
+      "name": "editor",
+      "description": "Role: EDITOR. Tightens the draft for clarity, tone, and structure.",
+      "when": ["team.Draft"],
+      "effect": "llm",
+      "prompt": "You are the EDITOR on a blog team. Improve this draft for clarity, flow, and correctness. Keep the title and Markdown body. Return ONLY a JSON object {\"title\": \"...\", \"body\": \"...\"}.\n\nDRAFT:\n{{team.Draft.body}}",
+      "resultCid": "team.Edited"
+    },
+    {
+      "kind": "emit-effect",
+      "name": "reviewer",
+      "description": "Role: REVIEWER. Gates the edited post: approve or send back for revision.",
+      "when": ["team.Edited"],
+      "effect": "llm",
+      "prompt": "You are the REVIEWER on a blog team. Judge this post for quality, accuracy, and tone. Return ONLY a JSON object {\"verdict\": \"approve\", \"notes\": \"...\"} or {\"verdict\": \"revise\", \"notes\": \"specific fixes needed\"}.\n\nTITLE: {{team.Edited.title}}\nBODY:\n{{team.Edited.body}}",
+      "resultCid": "team.Review"
+    },
+    {
+      "kind": "conditional",
+      "name": "gate",
+      "description": "Route on the reviewer's verdict: approve flows to publish, revise ends the run with notes.",
+      "when": ["team.Review", "team.Edited"],
+      "if": { "path": "team.Review.verdict", "op": "eq", "value": "approve" },
+      "then": {
+        "attach": "team.Approved",
+        "data": {
+          "title": "${team.Edited.title}",
+          "body": "${team.Edited.body}"
+        }
+      },
+      "else": {
+        "attach": "team.Revise",
+        "data": { "notes": "${team.Review.notes}" }
+      }
+    },
+    {
+      "kind": "emit-effect",
+      "name": "publish",
+      "description": "Role: PUBLISHER. Writes the approved post into site/posts/ as Markdown with front matter.",
+      "when": ["team.Brief", "team.Approved"],
+      "effect": "fs.write",
+      "args": {
+        "path": "site/posts/{{team.Brief.slug}}.md",
+        "contents": "---\ntitle: {{team.Approved.title}}\ndate: {{team.Brief.date}}\ntags: []\n---\n\n{{team.Approved.body}}\n"
+      },
+      "resultCid": "team.Published"
+    },
+    {
+      "kind": "emit-effect",
+      "name": "build",
+      "description": "Role: PUBLISHER. Rebuilds the static site from the Markdown posts.",
+      "when": ["team.Published"],
+      "effect": "bash.run",
+      "args": { "cmd": "python3 scripts/build.py" },
+      "resultCid": "team.Built"
+    },
+    {
+      "kind": "complete",
+      "name": "complete-published",
+      "when": ["team.Built"],
+      "result": { "from": "team.Built" }
+    },
+    {
+      "kind": "complete",
+      "name": "complete-revise",
+      "when": ["team.Revise"],
+      "result": { "from": "team.Revise" }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "apiVersion": "meridian.dev/v1alpha1",
+  "kind": "Workflow",
+  "name": "blog-deploy",
+  "description": "Build and ship the static site. Deterministic and offline: build the Markdown posts into dist/, smoke-check the output, then run the deploy script (which pushes to GitHub Pages when DEPLOY_REMOTE is set).",
+  "requires": ["bash.run"],
+  "components": {
+    "deploy.Go": { "ready": "string" },
+    "deploy.Built": { "code": "number", "stdout": "string", "stderr": "string" },
+    "deploy.Smoke": { "code": "number", "stdout": "string", "stderr": "string" },
+    "deploy.Shipped": { "code": "number", "stdout": "string", "stderr": "string" }
+  },
+  "steps": [
+    {
+      "kind": "emit-effect",
+      "name": "build",
+      "when": ["deploy.Go"],
+      "effect": "bash.run",
+      "args": { "cmd": "python3 scripts/build.py" },
+      "resultCid": "deploy.Built"
+    },
+    {
+      "kind": "emit-effect",
+      "name": "smoke-check",
+      "when": ["deploy.Built"],
+      "effect": "bash.run",
+      "args": { "cmd": "test -f dist/index.html && test -d dist/posts && echo OK" },
+      "resultCid": "deploy.Smoke"
+    },
+    {
+      "kind": "emit-effect",
+      "name": "ship",
+      "when": ["deploy.Smoke"],
+      "effect": "bash.run",
+      "args": { "cmd": "scripts/deploy.sh" },
+      "resultCid": "deploy.Shipped"
+    },
+    {
+      "kind": "complete",
+      "name": "done",
+      "when": ["deploy.Shipped"],
+      "result": { "from": "deploy.Shipped" }
+    }
+  ]
+}

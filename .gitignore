@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Generated site
+dist/
+
+# OS
+.DS_Store
+
+# Meridian coordination sidecars (fence/lease) — regenerated per run
+*.fence
+*.lease
+
+# Meridian run journals are audit artifacts — keep them tracked by default.
+# (uncomment to ignore instead:)
+# .meridian/**/run-*.jsonl

@@ -1,0 +1,66 @@
+{
+  "apiVersion": "meridian.dev/v1alpha1",
+  "kind": "Workflow",
+  "name": "blog-pitch-team",
+  "description": "The team in parallel: given one topic, three writers draft competing angles, and the team reduces to the best-scored draft. Fan-out (spawn) + reduce — the 'try N ways and pick the best' pattern.",
+  "requires": ["llm"],
+  "components": {
+    "pitch.Topic": { "text": "string" },
+    "pitch.Angles": {
+      "items": { "array": { "name": "string", "angle": "string" } }
+    },
+    "pitch.Angle": { "name": "string", "angle": "string" },
+    "pitch.Draft": { "title": "string", "body": "string", "score": "number" },
+    "pitch.Winner": { "title": "string", "body": "string", "score": "number" }
+  },
+  "steps": [
+    {
+      "kind": "emit-effect",
+      "name": "propose-angles",
+      "when": ["pitch.Topic"],
+      "effect": "llm",
+      "prompt": "Propose 3 distinct editorial angles for a blog post on: {{pitch.Topic.text}}. Return ONLY {\"items\":[{\"name\":\"...\",\"angle\":\"...\"}, ...]} with exactly 3 items.",
+      "resultCid": "pitch.Angles"
+    },
+    {
+      "kind": "spawn",
+      "name": "fanout-writers",
+      "when": ["pitch.Angles"],
+      "fanoutFrom": { "component": "pitch.Angles", "field": "items" },
+      "child": {
+        "components": [
+          { "cid": "pitch.Angle", "from": { "name": "item.name", "angle": "item.angle" } }
+        ]
+      },
+      "policy": "all"
+    },
+    {
+      "kind": "emit-effect",
+      "name": "draft",
+      "when": ["pitch.Angle"],
+      "effect": "llm",
+      "prompt": "You are the WRITER on a blog team. Write a blog post from this angle: {{pitch.Angle.angle}}. Rate your own draft 1-10. Return ONLY {\"title\":\"...\",\"body\":\"...\",\"score\":<number>}.",
+      "resultCid": "pitch.Draft"
+    },
+    {
+      "kind": "complete",
+      "name": "child-complete",
+      "when": ["pitch.Draft"],
+      "result": { "from": "pitch.Draft" }
+    },
+    {
+      "kind": "reduce",
+      "name": "pick-winner",
+      "when": [],
+      "from": "core.ChildrenComplete",
+      "select": { "pick": "max", "by": "result.score" },
+      "attach": "pitch.Winner"
+    },
+    {
+      "kind": "complete",
+      "name": "complete",
+      "when": ["pitch.Winner"],
+      "result": { "from": "pitch.Winner" }
+    }
+  ]
+}

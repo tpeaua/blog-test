@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{{TITLE}}</title>
+  <link rel="stylesheet" href="{{ROOT}}assets/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <h1><a href="{{ROOT}}index.html">{{SITE_TITLE}}</a></h1>
+      <p class="tagline">{{TAGLINE}}</p>
+      <nav>
+        <a href="{{ROOT}}index.html">Home</a>
+        <a href="{{ROOT}}about.html">About</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+{{CONTENT}}
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <p>&copy; {{YEAR}} {{SITE_TITLE}}. Built by the Meridian blog team.</p>
+    </div>
+  </footer>
+</body>
+</html>

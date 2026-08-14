@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About — {{SITE_TITLE}}</title>
+  <link rel="stylesheet" href="{{ROOT}}assets/style.css" />
+</head>
+<body>
+  <header class="site">
+    <div class="wrap">
+      <h1><a href="{{ROOT}}index.html">{{SITE_TITLE}}</a></h1>
+      <p class="tagline">{{TAGLINE}}</p>
+      <nav>
+        <a href="{{ROOT}}index.html">Home</a>
+        <a href="{{ROOT}}about.html">About</a>
+      </nav>
+    </div>
+  </header>
+  <main class="wrap">
+    <h2>About</h2>
+    <p>This is a small, static, dependency-free blog. Posts are written as Markdown
+    files and turned into plain HTML by a tiny build script — no framework, no
+    database, no client-side JavaScript.</p>
+    <p>Behind the scenes, an <strong>agentic team</strong> runs on
+    <a href="https://github.com/Cambrionic/meridian">Meridian</a>: a writer, an
+    editor, and a reviewer draft and gate each post, then a publisher builds and
+    ships the site. Every run is journaled, so the whole pipeline can be replayed
+    byte-for-byte at zero cost.</p>
+  </main>
+  <footer class="site">
+    <div class="wrap">
+      <p>&copy; {{YEAR}} {{SITE_TITLE}}. Built by the Meridian blog team.</p>
+    </div>
+  </footer>
+</body>
+</html>
